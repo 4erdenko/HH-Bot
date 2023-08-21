@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 RUN apt-get update && \
-    apt-get install -y chromium libglib2.0 libnss3 libgconf-2-4 libfontconfig1 gnupg wget curl cron unzip jq && \
+    apt-get install -y chromium libglib2.0 libnss3 libgconf-2-4 libfontconfig1 gnupg wget curl unzip jq && \
     python3 -m pip install --upgrade pip && \
     rm -rf /var/lib/apt/lists/*
 
@@ -26,7 +26,3 @@ ENV PYTHONUNBUFFERED 1
 COPY . .
 
 RUN pip install -r requirements.txt --no-cache-dir
-RUN touch /app/cron.log && chmod 666 /app/cron.log
-RUN chmod +x entrypoint.sh
-
-CMD ["/app/entrypoint.sh"]

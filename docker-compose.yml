@@ -6,4 +6,17 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+     - .env
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.hh_upper.schedule: "@every 4h5m"
+      ofelia.job-exec.hh_upper.command: "python /app/main.py & tail -f /app/app/selenium_actions.log"
+
+
+  ofelia:
+    image: mcuadros/ofelia
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: daemon --docker
+    depends_on:
+     - hh_upper

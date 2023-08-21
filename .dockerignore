@@ -8,3 +8,4 @@ chromedriver
 Dockerfile
 docker-compose.yml
 .gitignore
+entrypoint.sh
