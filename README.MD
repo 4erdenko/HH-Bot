@@ -40,7 +40,7 @@ Defines the Docker image with Python 3.11 and includes the Chromium browser and 
 
 
 ## Usage
-## Docker compose 
+### Docker compose 
 
 1. Clone the repository.
 2. Configure the `.env` file with the appropriate values.
