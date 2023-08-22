@@ -1,11 +1,12 @@
 import logging
 import sys
+from typing import Any
 
 from settings.config import LOGIN, PASSWORD
 from settings.strings import MSG_START
 from worker import TestHH
 
-logger = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,

@@ -1,10 +1,14 @@
 import logging
 import time
+from typing import Any, Optional, Tuple, cast
 
 import selenium.common.exceptions
 from selenium import webdriver
 from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -21,33 +25,33 @@ logger = logging.getLogger(__name__)
 
 
 class BaseBrowser:
-    def __init__(self, driver):
-        self.driver = driver
-        self.actions = ActionChains(self.driver)
-        self.wait = WebDriverWait(driver, WAIT_TEN_SEC)
+    def __init__(self, driver: Any):
+        self.driver: WebDriver = driver
+        self.actions: ActionChains = ActionChains(self.driver)
+        self.wait: WebDriverWait = WebDriverWait(driver, WAIT_TEN_SEC)
 
-    def click(self, locator):
+    def click(self, locator: Tuple[str, str]) -> None:
         try:
             self.driver.find_element(*locator).click()
         except Exception as error_message:
             logger.error(error_message)
 
-    def send_keys(self, locator, keys):
+    def send_keys(self, locator: Tuple[str, str], keys: str) -> None:
         try:
             self.driver.find_element(*locator).send_keys(keys)
         except Exception as error_message:
             logger.error(error_message)
 
-    def detect_element(self, element):
+    def detect_element(self, element: Tuple[str, str]) -> Optional[WebElement]:
         try:
-            return self.driver.find_element(*element)
+            return cast(WebElement, self.driver.find_element(*element))
         except selenium.common.exceptions.NoSuchElementException:
             logger.info(MSG_NOT_FOUND.format(element))
             return None
 
 
 class LoginPage(BaseBrowser):
-    def __init__(self, driver):
+    def __init__(self, driver: Any):
         super().__init__(driver)
         self.login_input = (By.NAME, NAME_LOGIN)
         self.submit_button = (
@@ -64,7 +68,7 @@ class LoginPage(BaseBrowser):
         )
         self.captcha = (By.CLASS_NAME, CLASS_CAPTCHA)
 
-    def login(self, username, password):
+    def login(self, username: str, password: str) -> None:
         self.send_keys(self.login_input, username)
         time.sleep(SLEEP_TIME)
         self.click(self.submit_button)
@@ -78,7 +82,7 @@ class LoginPage(BaseBrowser):
 
 
 class ResumePage(BaseBrowser):
-    def __init__(self, driver):
+    def __init__(self, driver: Any):
         super().__init__(driver)
         self.resume_update_button = (
             By.CSS_SELECTOR,
@@ -90,12 +94,12 @@ class ResumePage(BaseBrowser):
         )
 
     @retry(wait=wait_fixed(SLEEP_TIME), stop=stop_after_attempt(5))
-    def update_resume(self):
+    def update_resume(self) -> None:
         if self.detect_element(self.cookie_button) is not None:
             self.click(self.cookie_button)
         button = self.detect_element(self.resume_update_button)
-        if button.is_enabled():
-            self.actions.move_to_element(button).click(button).perform()
+        if button and button.is_enabled():  # type: ignore
+            self.click(self.resume_update_button)
             logger.info(MSG_CLICKED)
             time.sleep(SLEEP_TIME)
         else:
@@ -103,7 +107,9 @@ class ResumePage(BaseBrowser):
 
 
 class TestHH:
-    def __init__(self):
+    chrome_options: Options
+
+    def __init__(self) -> None:
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-dev-shm-usage')
@@ -124,7 +130,7 @@ class TestHH:
         self.driver.implicitly_wait(WAIT_TEN_SEC)
         self.driver.get(LOGIN_LINK)
 
-    def run(self, username, password):
+    def run(self, username: str, password: str) -> None:
         logger.info(MSG_RESUME_VALUE.format(len(RESUME_LINKS)))
         login_page = LoginPage(self.driver)
         logger.info(MSG_LOGIN_START)
