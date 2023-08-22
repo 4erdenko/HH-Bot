@@ -9,8 +9,8 @@ services:
      - .env
     labels:
       ofelia.enabled: "true"
-      ofelia.job-exec.hh_upper.schedule: "@every 4h5m"
-      ofelia.job-exec.hh_upper.command: "python /app/main.py & tail -f /app/app/selenium_actions.log"
+      ofelia.job-exec.hh_upper-every-4h.schedule: "@every 4h10m"
+      ofelia.job-exec.hh_upper-every-4h.command: "python /app/main.py"
 
 
   ofelia:

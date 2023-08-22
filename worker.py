@@ -8,75 +8,98 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from config import LOGIN_LINK, RESUME_LINK, USERAGENT, WAIT_IN_SEC
+from settings.config import (CLASS_CAPTCHA, CSS_ENTER_BUTTON,
+                             CSS_PASSWORD_INPUT, CSS_RESUME_UPDATE_BUTTON,
+                             CSS_SUBMIT_BUTTON, LOGIN_LINK, NAME_LOGIN,
+                             RESUME_LINKS, SLEEP_TIME, USER_AGENT,
+                             WAIT_TEN_SEC, XPATH_COOKIE_BUTTON)
+from settings.strings import (MSG_ALREADY_CLICKED, MSG_CAPTCHA, MSG_CLICKED,
+                              MSG_LOGIN_START, MSG_LOGIN_SUCCESS,
+                              MSG_NOT_FOUND, MSG_RESUME_NAME, MSG_RESUME_VALUE)
 
 logger = logging.getLogger(__name__)
 
 
-class LoginPage:
+class BaseBrowser:
     def __init__(self, driver):
         self.driver = driver
-        self.login_input = (By.NAME, 'login')
+        self.actions = ActionChains(self.driver)
+        self.wait = WebDriverWait(driver, WAIT_TEN_SEC)
+
+    def click(self, locator):
+        try:
+            self.driver.find_element(*locator).click()
+        except Exception as error_message:
+            logger.error(error_message)
+
+    def send_keys(self, locator, keys):
+        try:
+            self.driver.find_element(*locator).send_keys(keys)
+        except Exception as error_message:
+            logger.error(error_message)
+
+    def detect_element(self, element):
+        try:
+            return self.driver.find_element(*element)
+        except selenium.common.exceptions.NoSuchElementException:
+            logger.info(MSG_NOT_FOUND.format(element))
+            return None
+
+
+class LoginPage(BaseBrowser):
+    def __init__(self, driver):
+        super().__init__(driver)
+        self.login_input = (By.NAME, NAME_LOGIN)
         self.submit_button = (
             By.CSS_SELECTOR,
-            '[data-qa="expand-login-by-password"]',
+            CSS_SUBMIT_BUTTON,
         )
         self.password_input = (
             By.CSS_SELECTOR,
-            '[data-qa="login-input-password"]',
+            CSS_PASSWORD_INPUT,
         )
         self.enter_button = (
             By.CSS_SELECTOR,
-            '[data-qa="account-login-submit"]',
+            CSS_ENTER_BUTTON,
         )
-        self.captcha = (By.CLASS_NAME, 'bloko-link__content')
+        self.captcha = (By.CLASS_NAME, CLASS_CAPTCHA)
 
     def login(self, username, password):
-        self.driver.find_element(*self.login_input).send_keys(username)
-        time.sleep(2)
-        self.driver.find_element(*self.submit_button).click()
-        time.sleep(2)
-        self.driver.find_element(*self.password_input).send_keys(password)
-        time.sleep(2)
-        self.driver.find_element(*self.enter_button).click()
-        time.sleep(2)
-        try:
-            self.driver.find_element(*self.captcha)
-            raise ValueError('Get captched!')
-        except selenium.common.exceptions.NoSuchElementException:
-            pass
+        self.send_keys(self.login_input, username)
+        time.sleep(SLEEP_TIME)
+        self.click(self.submit_button)
+        time.sleep(SLEEP_TIME)
+        self.send_keys(self.password_input, password)
+        time.sleep(SLEEP_TIME)
+        self.click(self.enter_button)
+        time.sleep(SLEEP_TIME)
+        if self.detect_element(self.captcha) is not None:
+            raise ValueError(MSG_CAPTCHA)
 
 
-class ResumePage:
+class ResumePage(BaseBrowser):
     def __init__(self, driver):
-        self.driver = driver
-        self.wait = WebDriverWait(self.driver, WAIT_IN_SEC)
-        self.actions = ActionChains(self.driver)
+        super().__init__(driver)
         self.resume_update_button = (
             By.CSS_SELECTOR,
-            '[data-qa="resume-update-button"]',
+            CSS_RESUME_UPDATE_BUTTON,
         )
         self.cookie_button = (
             By.XPATH,
-            '//*[@id="HH-React-Root"]/div/div[1]/div/div/div/div[2]/button',
+            XPATH_COOKIE_BUTTON,
         )
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(5))
+    @retry(wait=wait_fixed(SLEEP_TIME), stop=stop_after_attempt(5))
     def update_resume(self):
-        try:
-            self.driver.find_element(*self.cookie_button).click()
-        except selenium.common.exceptions.NoSuchElementException:
-            pass
-        try:
-            button = self.driver.find_element(*self.resume_update_button)
-            if button.is_enabled():
-                self.actions.move_to_element(button).click(button).perform()
-                logger.info('Clicked!')
-                time.sleep(3)
-            else:
-                logger.info('Resume is already clicked')
-        except Exception as e:
-            logger.info(e)
+        if self.detect_element(self.cookie_button) is not None:
+            self.click(self.cookie_button)
+        button = self.detect_element(self.resume_update_button)
+        if button.is_enabled():
+            self.actions.move_to_element(button).click(button).perform()
+            logger.info(MSG_CLICKED)
+            time.sleep(SLEEP_TIME)
+        else:
+            logger.info(MSG_ALREADY_CLICKED)
 
 
 class TestHH:
@@ -94,22 +117,23 @@ class TestHH:
         chrome_options.add_experimental_option(
             'excludeSwitches', ['enable-automation']
         )
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-
-        chrome_options.add_argument(f'user-agent={USERAGENT}')
+        chrome_options.add_experimental_option(
+            'useAutomationExtension', False)
+        chrome_options.add_argument(f'user-agent={USER_AGENT}')
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.implicitly_wait(WAIT_IN_SEC)
+        self.driver.implicitly_wait(WAIT_TEN_SEC)
         self.driver.get(LOGIN_LINK)
 
     def run(self, username, password):
-        logger.info('Process started')
+        logger.info(MSG_RESUME_VALUE.format(len(RESUME_LINKS)))
         login_page = LoginPage(self.driver)
-        logger.info('Logging into HH account')
+        logger.info(MSG_LOGIN_START)
         login_page.login(username, password)
-        logger.info('Logged in successfully!')
+        logger.info(MSG_LOGIN_SUCCESS)
         time.sleep(3)
-
-        self.driver.get(RESUME_LINK)
-        resume_page = ResumePage(self.driver)
-        resume_page.update_resume()
+        for link in RESUME_LINKS:
+            logger.info(MSG_RESUME_NAME.format(link))
+            self.driver.get(link)
+            resume_page = ResumePage(self.driver)
+            resume_page.update_resume()
         self.driver.quit()
