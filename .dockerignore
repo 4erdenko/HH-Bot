@@ -9,3 +9,5 @@ Dockerfile
 docker-compose.yml
 .gitignore
 entrypoint.sh
+setup.cfg
+mypy.ini
