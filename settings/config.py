@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RESUME_LINKS: List[Optional[str]] = [os.getenv('RESUME_FIRST'),
-                                     os.getenv('RESUME_TWO')]
+RESUME_LINKS: List[Optional[str]] = [os.getenv('RESUME_FIRST')]
 LOGIN: Optional[str] = os.getenv('HH_LOGIN')
 PASSWORD: Optional[str] = os.getenv('HH_PASSWORD')
 USER_AGENT: Optional[str] = os.getenv('USER_AGENT')
