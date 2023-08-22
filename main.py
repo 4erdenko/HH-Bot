@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 from settings.config import LOGIN, PASSWORD
-from settings.strings import MSG_START
+from settings.strings import MSG_CREDENTIALS_ERROR, MSG_START
 from worker import TestHH
 
 logger: Any = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     )
     logger.info(MSG_START)
     if LOGIN is None or PASSWORD is None:
-        logger.error('Cant find login and password!')
-        raise ValueError('Cant find login and password!')
+        logger.error(MSG_CREDENTIALS_ERROR)
+        raise ValueError(MSG_CREDENTIALS_ERROR)
     HH = TestHH()
     HH.run(username=LOGIN, password=PASSWORD)
