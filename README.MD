@@ -1,9 +1,7 @@
-# HH Bot
+# HH Bot 
 
-## Introduction
+This project consists of a Python application designed to interact with web pages using the Selenium WebDriver. The application is containerized using Docker and orchestrated with Docker Compose.  
 This is a bot to automatically raise your resumes on https://hh.ru/ **absolutely free** of charge.  
-
-This project consists of a Python application designed to interact with web pages using the Selenium WebDriver. The application is containerized using Docker and orchestrated with Docker Compose.
 
 ## Components
 
