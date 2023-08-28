@@ -27,4 +27,4 @@ COPY . .
 
 RUN pip install -r requirements.txt --no-cache-dir
 
-CMD ["/bin/sh", "-c", "python /app/main.py & tail -f /dev/null"]
+CMD tail -f /dev/null

@@ -1,22 +1,22 @@
-version: '3.9'
+version: '3'
 
 services:
+
   hh_upper:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     env_file:
-     - .env
+      - .env
     labels:
-      ofelia.enabled: "true"
-      ofelia.job-exec.hh_upper-every-4h.schedule: "@every 4h10m"
-      ofelia.job-exec.hh_upper-every-4h.command: "python /app/main.py"
+      ofelia.enabled: true
+      ofelia.job-exec.hh_upper-every-4h.schedule: '@every 4h10m'
+      ofelia.job-exec.hh_upper-every-4h.command: 'python /app/main.py'
+      ofelia.job-exec.hh_upper-every-4h.run-on-startup: true
 
 
   ofelia:
-    image: mcuadros/ofelia
+    image: jtbry/ofelia:latest
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     command: daemon --docker
     depends_on:
-     - hh_upper
+      - hh_upper
